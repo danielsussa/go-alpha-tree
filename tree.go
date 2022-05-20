@@ -14,7 +14,7 @@ type Config struct {
 	Depth int
 }
 
-func Train(s State, c Config) float64 {
+func Train(s State, c Config) MinMaxOutput {
 	return minMax(s, c.Depth, math.Inf(-1), math.Inf(+1))
 }
 
@@ -28,51 +28,75 @@ type MinMaxOutput struct {
 	Eval float64
 }
 
-func minMax(s State, depth int, alpha float64, beta float64) float64 {
+func minMax(s State, depth int, alpha float64, beta float64) MinMaxOutput {
 	actions := s.PossibleActions()
+
 	if depth == 0 || actions == nil {
-		return s.GameResult()
+		return MinMaxOutput{
+			Eval: s.GameResult(),
+		}
 	}
+
 	if !s.OpponentTurn() {
 		maxEval := math.Inf(-1)
+		var id any
 		for _, action := range actions {
+
 			state := s.Copy()
 			state.PlayAction(action)
-			eval := minMax(state, depth-1, alpha, beta)
-			maxEval = max(maxEval, eval)
-			alpha = max(alpha, eval)
+
+			output := minMax(state, depth-1, alpha, beta)
+
+			var replace bool
+			if maxEval, replace = max(maxEval, output.Eval); replace {
+				id = action
+			}
+
+			alpha, _ = max(alpha, output.Eval)
 			if beta <= alpha {
 				break
 			}
 		}
-		return maxEval
+		return MinMaxOutput{
+			ID:   id,
+			Eval: maxEval,
+		}
 	} else {
 		minEval := math.Inf(+1)
+		var id any
 		for _, action := range actions {
 			state := s.Copy()
 			state.PlayAction(action)
 
-			eval := minMax(state, depth-1, alpha, beta)
-			minEval = min(minEval, eval)
-			beta = min(beta, eval)
+			output := minMax(state, depth-1, alpha, beta)
+
+			var replace bool
+			if minEval, replace = min(minEval, output.Eval); replace {
+				id = action
+			}
+			
+			beta, _ = min(beta, output.Eval)
 			if beta <= alpha {
 				break
 			}
 		}
-		return minEval
+		return MinMaxOutput{
+			ID:   id,
+			Eval: minEval,
+		}
 	}
 }
 
-func max(max, val float64) float64 {
+func max(max, val float64) (float64, bool) {
 	if val > max {
-		return val
+		return val, true
 	}
-	return max
+	return max, false
 }
 
-func min(min, val float64) float64 {
+func min(min, val float64) (float64, bool) {
 	if val > min {
-		return min
+		return min, true
 	}
-	return val
+	return val, false
 }

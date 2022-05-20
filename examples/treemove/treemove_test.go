@@ -8,6 +8,7 @@ import (
 
 func TestTreeMove(t *testing.T) {
 	s := &game1{}
-	eval := alphatree.Train(s, alphatree.Config{Depth: 5})
-	assert.Equal(t, 3.0, eval)
+	output := alphatree.Train(s, alphatree.Config{Depth: 5})
+	assert.Equal(t, 3.0, output.Eval)
+	assert.Equal(t, "A", output.ID)
 }
