@@ -15,7 +15,8 @@ type Config struct {
 }
 
 func Train(s State, c Config) MinMaxOutput {
-	return minMax(s, c.Depth, math.Inf(-1), math.Inf(+1))
+	i := 0
+	return minMax(s, c.Depth, math.Inf(-1), math.Inf(+1), &i)
 }
 
 type MinMaxInput struct {
@@ -24,16 +25,19 @@ type MinMaxInput struct {
 }
 
 type MinMaxOutput struct {
-	ID   any
-	Eval float64
+	ID         any
+	Eval       float64
+	Iterations int
 }
 
-func minMax(s State, depth int, alpha float64, beta float64) MinMaxOutput {
+func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOutput {
+	*iter++
 	actions := s.PossibleActions()
 
 	if depth == 0 || actions == nil {
 		return MinMaxOutput{
-			Eval: s.GameResult(),
+			Eval:       s.GameResult(),
+			Iterations: *iter,
 		}
 	}
 
@@ -45,7 +49,7 @@ func minMax(s State, depth int, alpha float64, beta float64) MinMaxOutput {
 			state := s.Copy()
 			state.PlayAction(action)
 
-			output := minMax(state, depth-1, alpha, beta)
+			output := minMax(state, depth-1, alpha, beta, iter)
 
 			var replace bool
 			if maxEval, replace = max(maxEval, output.Eval); replace {
@@ -58,8 +62,9 @@ func minMax(s State, depth int, alpha float64, beta float64) MinMaxOutput {
 			}
 		}
 		return MinMaxOutput{
-			ID:   id,
-			Eval: maxEval,
+			ID:         id,
+			Eval:       maxEval,
+			Iterations: *iter,
 		}
 	} else {
 		minEval := math.Inf(+1)
@@ -68,21 +73,22 @@ func minMax(s State, depth int, alpha float64, beta float64) MinMaxOutput {
 			state := s.Copy()
 			state.PlayAction(action)
 
-			output := minMax(state, depth-1, alpha, beta)
+			output := minMax(state, depth-1, alpha, beta, iter)
 
 			var replace bool
 			if minEval, replace = min(minEval, output.Eval); replace {
 				id = action
 			}
-			
+
 			beta, _ = min(beta, output.Eval)
 			if beta <= alpha {
 				break
 			}
 		}
 		return MinMaxOutput{
-			ID:   id,
-			Eval: minEval,
+			ID:         id,
+			Eval:       minEval,
+			Iterations: *iter,
 		}
 	}
 }

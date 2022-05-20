@@ -11,4 +11,5 @@ func TestTreeMove(t *testing.T) {
 	output := alphatree.Train(s, alphatree.Config{Depth: 5})
 	assert.Equal(t, 3.0, output.Eval)
 	assert.Equal(t, "A", output.ID)
+	assert.Equal(t, 11, output.Iterations)
 }
