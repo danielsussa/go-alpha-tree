@@ -59,16 +59,23 @@ func (g game1) GameResult() float64 {
 	case "BBA":
 		return 0
 	case "BBB":
-		return 9
+		return 10
 
 	default:
 		panic(fmt.Sprintf("not exist: %s", g.Current))
 	}
 }
 
-func (g game1) OpponentTurn() bool {
-	if g.Current != nil && len(g.Current.(string)) == 1 {
-		return true
+func (g game1) Weight(ids []any) []int {
+	return []int{1, 9}
+}
+
+func (g game1) ActionKind() alphatree.ActionKind {
+	if g.Current == "B" {
+		return alphatree.Random
 	}
-	return false
+	if g.Current != nil && len(g.Current.(string)) == 1 {
+		return alphatree.Opponent
+	}
+	return alphatree.Player
 }
