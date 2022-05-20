@@ -3,7 +3,6 @@ package tictactoe
 import (
 	alphatree "github.com/danielsussa/go-alpha-tree"
 	"github.com/stretchr/testify/assert"
-	"math/rand"
 	"testing"
 )
 
@@ -21,134 +20,6 @@ func TestGameScore(t *testing.T) {
 	}
 }
 
-func TestFirstMove(t *testing.T) {
-	game := &ticTacGame{
-		CurrentPlayer: H,
-		Board: []player{
-			E, E, E,
-			E, E, E,
-			E, E, E,
-		},
-	}
-
-	expected := []player{
-		E, E, E,
-		E, H, E,
-		E, E, E,
-	}
-
-	output := alphatree.Train(game, alphatree.Config{
-		Depth: 10,
-	})
-
-	game.PlayAction(output.ID)
-
-	assert.Equal(t, expected, game.Board)
-}
-
-func TestFirstMachineMove(t *testing.T) {
-	rand.Seed(11)
-	game := &ticTacGame{
-		CurrentPlayer: M,
-		Board: []player{
-			E, E, E,
-			E, E, E,
-			E, E, E,
-		},
-	}
-
-	expected := []player{
-		E, E, E,
-		E, M, E,
-		E, E, E,
-	}
-
-	output := alphatree.Train(game, alphatree.Config{
-		Depth: 10,
-	})
-
-	game.PlayAction(output.ID)
-
-	assert.Equal(t, expected, game.Board)
-}
-
-func TestBestSecondMove(t *testing.T) {
-	rand.Seed(2)
-	game := &ticTacGame{
-		CurrentPlayer: M,
-		Board: []player{
-			H, E, E,
-			E, E, E,
-			E, E, E,
-		},
-	}
-
-	expected := []player{
-		H, E, E,
-		E, M, E,
-		E, E, E,
-	}
-
-	output := alphatree.Train(game, alphatree.Config{
-		Depth: 15,
-	})
-
-	game.PlayAction(output.ID)
-
-	assert.Equal(t, expected, game.Board)
-}
-
-func TestDontLoseMoveHuman(t *testing.T) {
-	game := &ticTacGame{
-		CurrentPlayer: H,
-		Board: []player{
-			M, E, M,
-			E, H, E,
-			E, E, E,
-		},
-	}
-
-	expected := []player{
-		M, H, M,
-		E, H, E,
-		E, E, E,
-	}
-
-	output := alphatree.Train(game, alphatree.Config{
-		Depth: 10,
-	})
-
-	game.PlayAction(output.ID)
-
-	assert.Equal(t, expected, game.Board)
-}
-
-func TestDontLoseMoveHuman2(t *testing.T) {
-	rand.Seed(12)
-	game := &ticTacGame{
-		CurrentPlayer: H,
-		Board: []player{
-			M, E, H,
-			E, M, M,
-			E, E, H,
-		},
-	}
-
-	expected := []player{
-		M, E, H,
-		H, M, M,
-		E, E, H,
-	}
-
-	output := alphatree.Train(game, alphatree.Config{
-		Depth: 10,
-	})
-
-	game.PlayAction(output.ID)
-
-	assert.Equal(t, expected, game.Board)
-}
-
 func TestTable(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -156,6 +27,20 @@ func TestTable(t *testing.T) {
 		board  []player
 		want   []player
 	}{
+		{
+			name:   "test second movement",
+			player: M,
+			board: []player{
+				H, E, E,
+				E, E, E,
+				E, E, E,
+			},
+			want: []player{
+				H, E, E,
+				E, M, E,
+				E, E, E,
+			},
+		},
 		{
 			name:   "want machine stop player winning",
 			player: M,
@@ -196,6 +81,20 @@ func TestTable(t *testing.T) {
 				M, E, H,
 				M, M, M,
 				E, H, H,
+			},
+		},
+		{
+			name:   "machine won movement part 2",
+			player: M,
+			board: []player{
+				H, E, M,
+				H, H, E,
+				M, M, E,
+			},
+			want: []player{
+				H, E, M,
+				H, H, E,
+				M, M, M,
 			},
 		},
 	}

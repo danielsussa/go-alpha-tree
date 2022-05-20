@@ -19,6 +19,10 @@ func Train(s State, c Config) MinMaxOutput {
 	return minMax(s, c.Depth, math.Inf(-1), math.Inf(+1), &i)
 }
 
+func toPointer[T any](v T) *T {
+	return &v
+}
+
 type MinMaxInput struct {
 	State State
 	Depth int
@@ -101,8 +105,8 @@ func max(max, val float64) (float64, bool) {
 }
 
 func min(min, val float64) (float64, bool) {
-	if val > min {
-		return min, false
+	if val < min {
+		return val, true
 	}
-	return val, true
+	return min, false
 }
