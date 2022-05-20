@@ -32,6 +32,7 @@ type MinMaxOutput struct {
 	ID         any
 	Eval       float64
 	Iterations int
+	Path       []any
 }
 
 func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOutput {
@@ -42,12 +43,14 @@ func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOu
 		return MinMaxOutput{
 			Eval:       s.GameResult(),
 			Iterations: *iter,
+			Path:       make([]any, 0),
 		}
 	}
 
 	if !s.OpponentTurn() {
 		maxEval := math.Inf(-1)
 		var id any
+		var path []any
 		for _, action := range actions {
 
 			state := s.Copy()
@@ -57,6 +60,8 @@ func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOu
 
 			var replace bool
 			if maxEval, replace = max(maxEval, output.Eval); replace {
+				path = output.Path
+				path = append([]any{action}, path...)
 				id = action
 			}
 
@@ -69,10 +74,12 @@ func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOu
 			ID:         id,
 			Eval:       maxEval,
 			Iterations: *iter,
+			Path:       path,
 		}
 	} else {
 		minEval := math.Inf(+1)
 		var id any
+		var path []any
 		for _, action := range actions {
 			state := s.Copy()
 			state.PlayAction(action)
@@ -81,6 +88,8 @@ func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOu
 
 			var replace bool
 			if minEval, replace = min(minEval, output.Eval); replace {
+				path = output.Path
+				path = append([]any{action}, path...)
 				id = action
 			}
 
@@ -93,6 +102,7 @@ func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOu
 			ID:         id,
 			Eval:       minEval,
 			Iterations: *iter,
+			Path:       path,
 		}
 	}
 }

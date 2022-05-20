@@ -12,4 +12,5 @@ func TestTreeMove(t *testing.T) {
 	assert.Equal(t, 3.0, output.Eval)
 	assert.Equal(t, "A", output.ID)
 	assert.Equal(t, 11, output.Iterations)
+	assert.Equal(t, []any{"A", "AA", "AAB"}, output.Path)
 }
