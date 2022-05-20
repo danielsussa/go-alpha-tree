@@ -34,7 +34,7 @@ func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOu
 	*iter++
 	actions := s.PossibleActions()
 
-	if depth == 0 || actions == nil {
+	if depth == 0 || actions == nil || len(actions) == 0 {
 		return MinMaxOutput{
 			Eval:       s.GameResult(),
 			Iterations: *iter,
@@ -102,7 +102,7 @@ func max(max, val float64) (float64, bool) {
 
 func min(min, val float64) (float64, bool) {
 	if val > min {
-		return min, true
+		return min, false
 	}
-	return val, false
+	return val, true
 }
