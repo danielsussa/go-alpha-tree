@@ -1,11 +1,45 @@
 package g2048
 
 import (
+	"fmt"
 	alphatree "github.com/danielsussa/go-alpha-tree"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
 )
+
+func Test2048First(t *testing.T) {
+	rand.Seed(3)
+	game := startNewGame()
+	game.Board = []int{
+		0, 2, 0, 0,
+		0, 0, 0, 0,
+		2, 4, 0, 0,
+		64, 128, 256, 0,
+	}
+	print2048(game)
+	totalPlays := 0
+
+	for i := 0; i < 60; i++ {
+		out := alphatree.Train(game, alphatree.Config{
+			Depth: 10,
+		})
+
+		game.PlayAction(out.ID)
+
+		game.playSideEffects()
+
+		if game.topFirst() == 512 {
+			break
+		}
+
+		print2048(game)
+		totalPlays++
+	}
+	fmt.Println("total plays: ", totalPlays)
+	print2048(game)
+	fmt.Println(totalPlays)
+}
 
 func TestTable(t *testing.T) {
 	tests := []struct {
@@ -34,12 +68,22 @@ func TestTable(t *testing.T) {
 			want: "L",
 		},
 		{
-			name: "want human to move left",
+			name: "want human to move right",
 			board: `
-				0    0    0    0     
-				0    0    0    4     
-				2    2    4    8     
-				8    64   128  256 
+				0      0      2      2     
+				0      2      8      4     
+				32     128    64     8     
+				128    256    512    8192
+			`,
+			want: "R",
+		},
+		{
+			name: "want human to move right",
+			board: `
+				4      0      0      2     
+				4      2      0      0     
+				4      128    32     4     
+				128    512    1024   2048
 			`,
 			want: "L",
 		},
@@ -51,7 +95,8 @@ func TestTable(t *testing.T) {
 			game.Board = convertToBoard(test.board)
 
 			out := alphatree.Train(game, alphatree.Config{
-				Depth: 5,
+				Depth:             4,
+				RandomSimulations: 60,
 			})
 
 			print2048(game)
@@ -65,15 +110,23 @@ func TestTable(t *testing.T) {
 	}
 }
 
+// record
+//------- 112156 --------
+//2      8      16     4
+//4      512    64     32
+//8      16     256    4
+//4      1024   4      8192
+
 func TestPlay2048(t *testing.T) {
 
-	rand.Seed(2)
+	rand.Seed(3)
 	game := startNewGame()
 
 	print2048(game)
 	for {
 		out := alphatree.Train(game, alphatree.Config{
-			Depth: 10,
+			Depth:             8,
+			RandomSimulations: 20,
 		})
 
 		game.PlayAction(out.ID)

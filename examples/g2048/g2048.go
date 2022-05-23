@@ -19,7 +19,7 @@ type g2048 struct {
 
 func (g g2048) ActionKind() alphatree.ActionKind {
 	if g.SideEffectTurn {
-		return alphatree.Random
+		return alphatree.RandomM
 	}
 	return alphatree.Player
 }
@@ -89,7 +89,7 @@ func print2048WithRes(g *g2048, trainRes tree.TrainResult, res tree.PlayTurnResu
 
 func print2048(g *g2048) {
 	fmt.Print("\033[H\033[2J")
-	fmt.Println(fmt.Sprintf("------- %v --------", g.GameResult()))
+	fmt.Println(fmt.Sprintf("------- %v --------", g.simpleScore()))
 	for i := 0; i < 4; i++ {
 		k := i * 4
 		fmt.Print(fmt.Sprintf("%-6d %-6d %-6d %-6d", g.Board[0+k], g.Board[1+k], g.Board[2+k], g.Board[3+k]))
@@ -304,8 +304,8 @@ func (g g2048) top3Score() float64 {
 func (g g2048) GameResult() float64 {
 	//return tree.GameResult{Score: g.topFirst()}
 	//return g.freePlacesAndActions()
-	return g.simpleScore()
-	//return g.scoreByTopBottomFields()
+	//return g.simpleScore()
+	return g.scoreByTopBottomFields()
 }
 
 func (g g2048) scoreByTopBottomFields() float64 {

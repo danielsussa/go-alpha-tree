@@ -21,14 +21,16 @@ const (
 	Player   ActionKind = "p"
 	Opponent ActionKind = "o"
 	Random   ActionKind = "r"
+	RandomM  ActionKind = "rm"
 )
 
 type Config struct {
-	Depth int
+	Depth             int
+	RandomSimulations int
 }
 
 func Train(s State, c Config) MinMaxOutput {
-	return minMax(s, c.Depth, math.Inf(-1), math.Inf(+1), toPointer(0))
+	return minMax(s, c, c.Depth, math.Inf(-1), math.Inf(+1), toPointer(0))
 }
 
 func toPointer[T any](v T) *T {
@@ -47,7 +49,7 @@ type MinMaxOutput struct {
 	Path       []any
 }
 
-func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOutput {
+func minMax(s State, c Config, depth int, alpha float64, beta float64, iter *int) MinMaxOutput {
 	*iter++
 	actions := s.PossibleActions()
 
@@ -69,7 +71,7 @@ func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOu
 			state := s.Copy()
 			state.PlayAction(action)
 
-			output := minMax(state, depth-1, alpha, beta, iter)
+			output := minMax(state, c, depth-1, alpha, beta, iter)
 
 			var replace bool
 			if maxEval, replace = max(maxEval, output.Eval); replace {
@@ -97,7 +99,7 @@ func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOu
 			state := s.Copy()
 			state.PlayAction(action)
 
-			output := minMax(state, depth-1, alpha, beta, iter)
+			output := minMax(state, c, depth-1, alpha, beta, iter)
 
 			var replace bool
 			if minEval, replace = min(minEval, output.Eval); replace {
@@ -122,14 +124,16 @@ func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOu
 		var id any
 		var path []any
 
-		idx := selectAction(s.Weight(actions))
+		totalRnd, _ := max(10, c.RandomSimulations)
 
-		action := actions[idx]
+		idx := selectAction(s.Weight(actions), totalRnd)
+
+		action := actions[evaluateActionsSel(idx)]
 
 		state := s.Copy()
 		state.PlayAction(action)
 
-		output := minMax(state, depth-1, alpha, beta, iter)
+		output := minMax(state, c, depth-1, alpha, beta, iter)
 
 		var replace bool
 		if minEval, replace = min(minEval, output.Eval); replace {
@@ -145,12 +149,48 @@ func minMax(s State, depth int, alpha float64, beta float64, iter *int) MinMaxOu
 			Iterations: *iter,
 			Path:       path,
 		}
+	case RandomM:
+		minEval := math.Inf(+1)
+		var id any
+		var path []any
+
+		totalRnd, _ := max(10, c.RandomSimulations)
+
+		rndIdx := selectAction(s.Weight(actions), totalRnd)
+
+		var eval float64
+		for actionIdx, qtdPlays := range rndIdx {
+			if qtdPlays == 0 {
+				continue
+			}
+			action := actions[actionIdx]
+
+			state := s.Copy()
+			state.PlayAction(action)
+
+			output := minMax(state, c, depth-1, alpha, beta, iter)
+			eval += output.Eval * float64(qtdPlays)
+		}
+		eval /= float64(totalRnd)
+
+		minEval, _ = min(minEval, eval)
+
+		beta, _ = min(beta, eval)
+		return MinMaxOutput{
+			ID:         id,
+			Eval:       minEval,
+			Iterations: *iter,
+			Path:       path,
+		}
 	default:
 		panic("kind not exist")
 	}
 }
 
-func selectAction(weights []int) int {
+// [1,9]
+// result -> [3,7]
+// you have to play 3 times the zero
+func selectAction(weights []int, totalSim int) []int {
 	sumWeight := 0
 	for _, weight := range weights {
 		sumWeight += weight
@@ -158,11 +198,15 @@ func selectAction(weights []int) int {
 
 	mapSelected := make([]int, len(weights))
 
-	for i := 0; i < 10; i++ {
+	for i := 0; i < totalSim; i++ {
 		rnd := rand.Intn(sumWeight)
 		mapSelected[selection(weights, rnd)]++
 	}
 
+	return mapSelected
+}
+
+func evaluateActionsSel(mapSelected []int) int {
 	selectedIdx := -1
 	maxVal := -1
 	for idx, val := range mapSelected {
@@ -197,14 +241,14 @@ func orderActions(actions []any, weight []float64) {
 	})
 }
 
-func max(max, val float64) (float64, bool) {
+func max[T float64 | int](max, val T) (T, bool) {
 	if val > max {
 		return val, true
 	}
 	return max, false
 }
 
-func min(min, val float64) (float64, bool) {
+func min[T float64 | int](min, val T) (T, bool) {
 	if val < min {
 		return val, true
 	}
