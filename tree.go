@@ -2,7 +2,6 @@ package alphatree
 
 import (
 	"math"
-	"math/rand"
 	"sort"
 )
 
@@ -10,7 +9,7 @@ type State interface {
 	Copy() State
 	PlayAction(any)
 	PossibleActions() []any
-	Weight([]any) []int
+	Probability([]any) []float64
 	GameResult() float64
 	ActionKind() ActionKind
 }
@@ -18,15 +17,13 @@ type State interface {
 type ActionKind string
 
 const (
-	Player   ActionKind = "p"
-	Opponent ActionKind = "o"
-	Random   ActionKind = "r"
-	RandomM  ActionKind = "rm"
+	Max    ActionKind = "p"
+	Min    ActionKind = "o"
+	Expect ActionKind = "e"
 )
 
 type Config struct {
-	Depth             int
-	RandomSimulations int
+	Depth int
 }
 
 func Train(s State, c Config) MinMaxOutput {
@@ -62,7 +59,7 @@ func minMax(s State, c Config, depth int, alpha float64, beta float64, iter *int
 	}
 
 	switch s.ActionKind() {
-	case Player:
+	case Max:
 		maxEval := math.Inf(-1)
 		var id any
 		var path []any
@@ -91,7 +88,7 @@ func minMax(s State, c Config, depth int, alpha float64, beta float64, iter *int
 			Iterations: *iter,
 			Path:       path,
 		}
-	case Opponent:
+	case Min:
 		minEval := math.Inf(+1)
 		var id any
 		var path []any
@@ -119,103 +116,29 @@ func minMax(s State, c Config, depth int, alpha float64, beta float64, iter *int
 			Iterations: *iter,
 			Path:       path,
 		}
-	case Random:
-		minEval := math.Inf(+1)
+	case Expect:
+		expectEval := 0.0
 		var id any
 		var path []any
 
-		totalRnd, _ := max(10, c.RandomSimulations)
+		probabilities := s.Probability(actions)
 
-		idx := selectAction(s.Weight(actions), totalRnd)
-
-		action := actions[evaluateActionsSel(idx)]
-
-		state := s.Copy()
-		state.PlayAction(action)
-
-		output := minMax(state, c, depth-1, alpha, beta, iter)
-
-		var replace bool
-		if minEval, replace = min(minEval, output.Eval); replace {
-			path = output.Path
-			path = append([]any{action}, path...)
-			id = action
-		}
-
-		beta, _ = min(beta, output.Eval)
-		return MinMaxOutput{
-			ID:         id,
-			Eval:       minEval,
-			Iterations: *iter,
-			Path:       path,
-		}
-	case RandomM:
-		minEval := math.Inf(+1)
-		var id any
-		var path []any
-
-		totalRnd, _ := max(10, c.RandomSimulations)
-
-		rndIdx := selectAction(s.Weight(actions), totalRnd)
-
-		var eval float64
-		for actionIdx, qtdPlays := range rndIdx {
-			if qtdPlays == 0 {
-				continue
-			}
-			action := actions[actionIdx]
-
+		for idx, action := range actions {
 			state := s.Copy()
 			state.PlayAction(action)
 
 			output := minMax(state, c, depth-1, alpha, beta, iter)
-			eval += output.Eval * float64(qtdPlays)
+			expectEval += probabilities[idx] * output.Eval
 		}
-		eval /= float64(totalRnd)
-
-		minEval, _ = min(minEval, eval)
-
-		beta, _ = min(beta, eval)
 		return MinMaxOutput{
 			ID:         id,
-			Eval:       minEval,
+			Eval:       expectEval,
 			Iterations: *iter,
 			Path:       path,
 		}
 	default:
 		panic("kind not exist")
 	}
-}
-
-// [1,9]
-// result -> [3,7]
-// you have to play 3 times the zero
-func selectAction(weights []int, totalSim int) []int {
-	sumWeight := 0
-	for _, weight := range weights {
-		sumWeight += weight
-	}
-
-	mapSelected := make([]int, len(weights))
-
-	for i := 0; i < totalSim; i++ {
-		rnd := rand.Intn(sumWeight)
-		mapSelected[selection(weights, rnd)]++
-	}
-
-	return mapSelected
-}
-
-func evaluateActionsSel(mapSelected []int) int {
-	selectedIdx := -1
-	maxVal := -1
-	for idx, val := range mapSelected {
-		if val > maxVal {
-			maxVal = val
-			selectedIdx = idx
-		}
-	}
-	return selectedIdx
 }
 
 func selection(weights []int, rnd int) int {

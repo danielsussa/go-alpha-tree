@@ -22,7 +22,7 @@ func Test2048First(t *testing.T) {
 
 	for i := 0; i < 60; i++ {
 		out := alphatree.Train(game, alphatree.Config{
-			Depth: 10,
+			Depth: 7,
 		})
 
 		game.PlayAction(out.ID)
@@ -95,8 +95,7 @@ func TestTable(t *testing.T) {
 			game.Board = convertToBoard(test.board)
 
 			out := alphatree.Train(game, alphatree.Config{
-				Depth:             4,
-				RandomSimulations: 60,
+				Depth: 4,
 			})
 
 			print2048(game)
@@ -117,16 +116,22 @@ func TestTable(t *testing.T) {
 //8      16     256    4
 //4      1024   4      8192
 
+// 25452
 func TestPlay2048(t *testing.T) {
 
-	rand.Seed(3)
+	rand.Seed(2)
 	game := startNewGame()
+	game.Board = convertToBoard(`
+			0      2      4       2
+			4      8      16    512
+			4      16   2048   8192
+			2      32   4096  16384
+	`)
 
 	print2048(game)
 	for {
 		out := alphatree.Train(game, alphatree.Config{
-			Depth:             8,
-			RandomSimulations: 20,
+			Depth: 9,
 		})
 
 		game.PlayAction(out.ID)
@@ -138,6 +143,7 @@ func TestPlay2048(t *testing.T) {
 		}
 
 		print2048(game)
+
 	}
 	print2048(game)
 }

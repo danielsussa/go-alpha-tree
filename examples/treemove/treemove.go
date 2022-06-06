@@ -66,16 +66,16 @@ func (g game1) GameResult() float64 {
 	}
 }
 
-func (g game1) Weight(ids []any) []int {
-	return []int{1, 9}
+func (g game1) Probability(ids []any) []float64 {
+	return []float64{0.1, 0.9}
 }
 
 func (g game1) ActionKind() alphatree.ActionKind {
 	if g.Current == "B" {
-		return alphatree.Random
+		return alphatree.Expect
 	}
 	if g.Current != nil && len(g.Current.(string)) == 1 {
-		return alphatree.Opponent
+		return alphatree.Min
 	}
-	return alphatree.Player
+	return alphatree.Max
 }

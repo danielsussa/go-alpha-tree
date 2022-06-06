@@ -19,9 +19,9 @@ type g2048 struct {
 
 func (g g2048) ActionKind() alphatree.ActionKind {
 	if g.SideEffectTurn {
-		return alphatree.RandomM
+		return alphatree.Expect
 	}
-	return alphatree.Player
+	return alphatree.Max
 }
 
 func (g g2048) Copy() alphatree.State {
@@ -35,15 +35,16 @@ func (g g2048) Copy() alphatree.State {
 	}
 }
 
-func (g g2048) Weight(actions []any) []int {
-	weights := make([]int, len(actions))
+func (g g2048) Probability(actions []any) []float64 {
+	chancePerTile := 1.0 / float64(len(actions)) * 2
+	weights := make([]float64, len(actions))
 
 	//totalFreeSpace := len(actions) / 2
 	for idx, action := range actions {
 		if strings.Contains(action.(string), "2-") {
-			weights[idx] = 9
+			weights[idx] = chancePerTile * 0.9
 		} else {
-			weights[idx] = 1
+			weights[idx] = chancePerTile * 0.1
 		}
 	}
 	return weights
@@ -303,9 +304,15 @@ func (g g2048) top3Score() float64 {
 
 func (g g2048) GameResult() float64 {
 	//return tree.GameResult{Score: g.topFirst()}
-	//return g.freePlacesAndActions()
+	return g.freePlacesAndActions()
 	//return g.simpleScore()
-	return g.scoreByTopBottomFields()
+	//return g.scoreByTopBottomFields()
+}
+
+func (g g2048) scoreByFieldsAndCorner() float64 {
+	freeplace := len(getFreePlaces(g.Board))
+	//corner := math.Sqrt(float64(g.Board[15]))
+	return float64(freeplace)
 }
 
 func (g g2048) scoreByTopBottomFields() float64 {

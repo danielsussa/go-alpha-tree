@@ -20,11 +20,15 @@ type ticTacGame struct {
 	CurrentPlayer player
 }
 
-func (t ticTacGame) OpponentTurn() bool {
+func (t ticTacGame) Probability(anies []any) []float64 {
+	panic("implement me")
+}
+
+func (t ticTacGame) ActionKind() alphatree.ActionKind {
 	if t.CurrentPlayer == M {
-		return true
+		return alphatree.Min
 	}
-	return false
+	return alphatree.Max
 }
 
 func (t ticTacGame) Copy() alphatree.State {
